@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "646747861074",
+    "project_id": "asthmatic-ci",
+    "storage_bucket": "asthmatic-ci.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:646747861074:android:d2402eb18d47d47a64ef8b",
+        "android_client_info": {
+          "package_name": "com.example.recente_version_aths"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFBLh0ROT4nF55i3uVV3nK6W3wCvVliis"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
