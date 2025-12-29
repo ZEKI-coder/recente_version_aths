@@ -1,23 +1,20 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:lottie/lottie.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:lottie/lottie.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../services/session_manager.dart';
-import '../../services/database_service.dart';
 import '../../services/health_service.dart';
 import '../../services/health_simulator.dart';
 import '../../models/health_status.dart';
 import '../../models/health_record.dart';
-import '../../models/user.dart' as user_model;
 import '../../services/ai_advisor_service.dart';
+import 'map_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -27,7 +24,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
-  String? _currentActivity;  // Pour suivre l'activité actuelle
+  String? _currentActivity;  
   String? _userName = 'Utilisateur';
   bool _isLoading = true;
   String _aiAdvice = 'Analyse en cours...';
@@ -36,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   // Suivi des enregistrements de santé
   List<HealthRecord> _healthHistory = [];
   Timer? _recordTimer;
-  static const int _maxRecords = 100; // Nombre maximum d'enregistrements à conserver
+  static const int _maxRecords = 100; 
   
   // Données des indicateurs de santé
   late final HealthService _healthService;
@@ -47,7 +44,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   
   late AnimationController _animationController;
   late Animation<double> _animation;
-  int _alertLevel = 0;
   int _selectedTabIndex = 0;
   
   @override
@@ -60,7 +56,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       duration: const Duration(seconds: 2),
     );
     
-    // Initialiser l'animation avec des valeurs par défaut
     _animation = Tween<double>(begin: 0.9, end: 1.1).animate(
       CurvedAnimation(
         parent: _animationController,
@@ -68,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
     
-    _updateAnimation(72.0, 98.0); // Valeurs par défaut
+    _updateAnimation(72.0, 98.0); 
     _animationController.repeat(reverse: true);
     
     _loadUserData().then((_) {
@@ -87,12 +82,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  // Formatage de l'heure pour l'affichage des horodatages
   String _formatTime(DateTime dateTime) {
     return DateFormat('HH:mm').format(dateTime);
   }
 
-  // Construction d'un élément de statistique dans la section de suivi quotidien
   Widget _buildStatItem(String label, String value, Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +110,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // Détermine la couleur du score de santé global
   Color _getHealthScoreColor(double score) {
     if (score >= 75) return Colors.green;
     if (score >= 50) return Colors.orange;
@@ -125,7 +117,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Colors.red;
   }
 
-  // Calcule la tendance du score de santé par rapport au dernier enregistrement
   String _calculateTrend() {
     if (_healthHistory.length < 2) return '→ Stable';
 
@@ -138,7 +129,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return '→ Stable';
   }
 
-  // Couleur associée à la tendance
   Color _getTrendColor() {
     final trend = _calculateTrend();
     if (trend.contains('hausse')) return Colors.green;
@@ -146,7 +136,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Colors.blue;
   }
 
-  // Boîte de dialogue pour sélectionner une autre activité
   void _showOtherActivityDialog() {
     showDialog(
       context: context,
@@ -163,7 +152,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // Section d'affichage des conseils de l'assistant IA
   Widget _buildAssistantAdviceSection() {
     return Card(
       child: Padding(
@@ -215,21 +203,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _startAdviceUpdates() {
-    // Mettre à jour les conseils immédiatement
     _updateAIAdvice();
     
-    // Puis toutes les 1 minute
     _adviceTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
       _updateAIAdvice();
     });
     
-    // Démarrer l'enregistrement périodique des données
     _startHealthRecording();
   }
   
   void _startHealthRecording() {
-    // Enregistrer périodiquement toutes les 5 minutes (la première donnée
-    // est déjà enregistrée lors de la première mise à jour _updateHealthData)
     _recordTimer = Timer.periodic(const Duration(minutes: 5), (timer) {
       if (!mounted) return;
       setState(() {
@@ -244,7 +227,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     try {
       final healthScore = HealthRecord.calculateHealthScore(_healthIndicators);
       
-      // Convertir les indicateurs en format sérialisable
       final indicatorsMap = {
         for (var entry in _healthIndicators.entries)
           entry.key: {
@@ -260,16 +242,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         healthScore: healthScore,
       );
       
-      // Ajouter à l'historique (sans setState ici pour éviter les setState imbriqués).
-      // Les appels qui ont besoin de rafraîchir l'UI entourent cette méthode avec setState.
       _healthHistory.add(record);
       
-      // Limiter la taille de l'historique
       if (_healthHistory.length > _maxRecords) {
         _healthHistory.removeAt(0);
       }
       
-      // Sauvegarder dans Firestore (optionnel)
       _saveHealthRecordToFirestore(record);
     } catch (e) {
       debugPrint('Erreur lors de l\'enregistrement des données de santé: $e');
@@ -296,7 +274,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       final userId = SessionManager.getUserId();
       if (userId == null) return;
 
-      // Récupérer les données utilisateur depuis Firestore directement
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
@@ -309,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         });
       }
     } catch (e) {
-      print('Erreur lors du chargement des données utilisateur: $e');
+      debugPrint('Erreur lors du chargement des données utilisateur: $e');
     }
   }
 
@@ -319,19 +296,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       if (userId != null) {
         _healthService = HealthService(userId);
       } else {
-        print("⚠️ Aucun utilisateur connecté, utilisation uniquement des données simulées");
+        debugPrint("⚠️ Aucun utilisateur connecté, utilisation uniquement des données simulées");
       }
 
-      // Initialiser avec des données de simulation (toujours, même sans utilisateur)
       _updateHealthData(_healthSimulator.generateInitialData());
       
       if (mounted) {
         setState(() {
-          _isLoading = false; // Arrêter le chargement après l'initialisation
+          _isLoading = false;
         });
       }
       
-      // Démarrer la simulation locale
       _simulationTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
         if (mounted) {
           setState(() {
@@ -340,7 +315,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         }
       });
       
-      // Si un utilisateur est connecté, essayer de se connecter à Firebase pour des données réelles
       if (userId != null) {
         try {
           _healthSubscription = _healthService.getHealthIndicatorsStream().listen(
@@ -355,40 +329,32 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               }
             },
             onError: (error) {
-              print("⚠️ Erreur de connexion Firebase: $error");
-              // Continuer avec les données simulées en cas d'erreur
+              debugPrint("⚠️ Erreur de connexion Firebase: $error");
             },
             cancelOnError: true,
           );
         } catch (e) {
-          print("⚠️ Erreur lors de l'écoute des mises à jour Firebase: $e");
-          // Continuer avec les données simulées
+          debugPrint("⚠️ Erreur lors de l'écoute des mises à jour Firebase: $e");
         }
       }
     } catch (e) {
-      print("❌ Erreur dans _startSimulation: $e");
+      debugPrint("❌ Erreur dans _startSimulation: $e");
       if (mounted) {
         setState(() {
-          _isLoading = false; // S'assurer que le chargement s'arrête en cas d'erreur
+          _isLoading = false;
         });
       }
     }
   }
   
   void _updateAnimation(double heartRate, double spo2) {
-    // Ajuster la vitesse en fonction de la fréquence cardiaque
-    // Plus la fréquence est élevée, plus l'animation est rapide
     double speedFactor = (heartRate / 60).clamp(0.5, 2.0);
     
-    // Ajuster l'amplitude en fonction de la saturation en oxygène
-    // Moins il y a d'oxygène, plus l'amplitude est grande
-    double spo2Factor = (100 - spo2) / 10; // 0 à 1.5 (pour 85-100% SpO2)
-    double amplitude = 0.1 + (spo2Factor * 0.05); // 0.1 à 0.175
+    double spo2Factor = (100 - spo2) / 10; 
+    double amplitude = 0.1 + (spo2Factor * 0.05); 
     
-    // Mettre à jour la durée de l'animation
     _animationController.duration = Duration(milliseconds: (2000 / speedFactor).round());
     
-    // Mettre à jour l'échelle de l'animation
     _animation = Tween<double>(
       begin: 1.0 - amplitude,
       end: 1.0 + amplitude,
@@ -405,20 +371,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _healthIndicators = newData;
       _isLoading = false;
       
-      // Mettre à jour l'animation en fonction des nouvelles données
       final heartRate = double.tryParse(
             (newData['bpm']?.value ?? newData['heart_rate']?.value ?? '0').toString(),
           ) ?? 0;
       final spo2 = double.tryParse(newData['spo2']?.value.toString() ?? '0') ?? 0;
       _updateAnimation(heartRate, spo2);
       
-      // Mettre à jour le niveau d'alerte
       _updateAlertLevel();
       
-      // Mettre à jour l'activité en fonction des données
       _updateActivityBasedOnData(newData);
       
-      // Enregistrer les données de santé à chaque mise à jour pour alimenter la courbe
       _recordHealthData();
     });
   }
@@ -444,14 +406,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     
     if (mounted) {
       setState(() {
-        _alertLevel = maxAlertLevel;
+        // _alertLevel = maxAlertLevel; 
       });
     }
   }
 
   void _updateActivityBasedOnData(Map<String, HealthIndicatorData> data) {
-    // Mettre à jour l'activité en fonction des données
-    // Exemple : si la fréquence cardiaque est élevée, considérer que l'utilisateur est en train de faire du sport
     final heartRate = double.tryParse(
           (data['bpm']?.value ?? data['heart_rate']?.value ?? '0').toString(),
         ) ?? 0;
@@ -494,9 +454,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: indicatorColor.withOpacity(0.1),
+        color: indicatorColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: indicatorColor.withOpacity(0.3)),
+        border: Border.all(color: indicatorColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -555,7 +515,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               height: 200,
               child: LineChart(
                 LineChartData(
-                  gridData: FlGridData(show: true),
+                  gridData: const FlGridData(show: true),
                   titlesData: FlTitlesData(
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
@@ -589,7 +549,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       sideTitles: SideTitles(showTitles: false),
                     ),
                   ),
-                  borderData: FlBorderData(show: true, border: Border.all(color: Colors.grey[300]!)),
+                  borderData: FlBorderData(show: true, border: Border.all(color: Colors.grey.withValues(alpha: 0.3)!)),
                   minX: 0,
                   maxX: _healthHistory.isNotEmpty ? _healthHistory.length - 1 : 1,
                   minY: 0,
@@ -608,7 +568,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       dotData: FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: Colors.blue.withOpacity(0.1),
+                        color: Colors.blue.withValues(alpha: 0.1),
                       ),
                     ),
                   ],
@@ -632,13 +592,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget _buildAssociateDoctorButton() {
     return ElevatedButton.icon(
-      onPressed: () {
-        // Logique pour associer un médecin
-      },
-      icon: Icon(Icons.medical_services),
-      label: Text('Associer un médecin'),
+      onPressed: () {},
+      icon: const Icon(Icons.medical_services),
+      label: const Text('Associer un médecin'),
       style: ElevatedButton.styleFrom(
-        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(30),
         ),
@@ -646,7 +604,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // Méthode pour construire un bouton d'activité
   Widget _buildActivityButton(String label, IconData icon) {
     final isActive = _currentActivity == label;
     return Column(
@@ -674,7 +631,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildLungAnimation() {
-    // Vérifier si les indicateurs sont chargés
     final spo2Data = _healthIndicators['spo2'] ?? 
         HealthIndicatorData(
           value: '98',
@@ -712,7 +668,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           timestamp: DateTime.now(),
         );
 
-    // Initialiser l'animation si ce n'est pas déjà fait
     if (!_animationController.isAnimating) {
       _animation = Tween<double>(
         begin: 0.95,
@@ -730,17 +685,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Animation des poumons
           Container(
             width: 200,
             height: 200,
             margin: const EdgeInsets.only(top: 20, bottom: 40, left: 40),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.grey[100],
+              color: Colors.grey.withValues(alpha: 0.1),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.blue.withOpacity(0.2),
+                  color: Colors.blue.withValues(alpha: 0.2),
                   blurRadius: 15,
                   spreadRadius: 5,
                 ),
@@ -803,6 +757,127 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
+  Widget _buildCurrentBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    // Onglet "Carte"
+    if (_selectedTabIndex == 1) {
+      return MapScreen(healthIndicators: _healthIndicators);
+    }
+
+    // Onglet "Connexion" (placeholder pour le moment)
+    if (_selectedTabIndex == 2) {
+      return const Center(
+        child: Text('Espace connexion à venir'),
+      );
+    }
+
+    // Onglet "Accueil" (comportement existant)
+    if (_healthIndicators.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.orange),
+            const SizedBox(height: 16),
+            const Text(
+              'Impossible de charger les données de santé',
+              style: TextStyle(fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Utilisation des données simulées',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _startSimulation,
+              child: const Text('Réessayer'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Animation des poumons
+          _buildLungAnimation(),
+          
+          const SizedBox(height: 20),
+          
+          // Section des activités
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Votre activité actuelle ?',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildActivityButton(
+                        'Dormir',
+                        Icons.nightlight_round,
+                      ),
+                      _buildActivityButton(
+                        'Marche',
+                        Icons.directions_walk,
+                      ),
+                      _buildActivityButton(
+                        'Course',
+                        Icons.directions_run,
+                      ),
+                      _buildActivityButton(
+                        'Autre',
+                        Icons.add_circle_outline,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Section des conseils de l'assistant
+          _buildAssistantAdviceSection(),
+          
+          const SizedBox(height: 20),
+          
+          // Section de suivi quotidien
+          _buildDailyTrackingSection(),
+          
+          const SizedBox(height: 20),
+          
+          // Bouton pour associer un médecin
+          Center(child: _buildAssociateDoctorButton()),
+          
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -840,107 +915,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _healthIndicators.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline, size: 48, color: Colors.orange),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Impossible de charger les données de santé',
-                        style: TextStyle(fontSize: 16),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Utilisation des données simulées',
-                        style: TextStyle(fontSize: 14, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: _startSimulation,
-                        child: const Text('Réessayer'),
-                      ),
-                    ],
-                  ),
-                )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Animation des poumons
-                      _buildLungAnimation(),
-                      
-                      const SizedBox(height: 20),
-                      
-                      // Section des activités
-                      Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Votre activité actuelle ?',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                children: [
-                                  _buildActivityButton(
-                                    'Dormir',
-                                    Icons.nightlight_round,
-                                  ),
-                                  _buildActivityButton(
-                                    'Marche',
-                                    Icons.directions_walk,
-                                  ),
-                                  _buildActivityButton(
-                                    'Course',
-                                    Icons.directions_run,
-                                  ),
-                                  _buildActivityButton(
-                                    'Autre',
-                                    Icons.add_circle_outline,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 20),
-                      
-                      // Section des conseils de l'assistant
-                      _buildAssistantAdviceSection(),
-                      
-                      const SizedBox(height: 20),
-                      
-                      // Section de suivi quotidien
-                      _buildDailyTrackingSection(),
-                      
-                      const SizedBox(height: 20),
-                      
-                      // Bouton pour associer un médecin
-                      Center(child: _buildAssociateDoctorButton()),
-                      
-                      const SizedBox(height: 20),
-                    ],
-                  ),
-                ),
+      body: _buildCurrentBody(),
     );
   }
 }
