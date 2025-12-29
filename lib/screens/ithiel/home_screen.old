@@ -1,0 +1,544 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../services/session_manager.dart';
+import '../../services/database_service.dart';
+import '../../services/health_service.dart';
+import '../../models/health_status.dart';
+import '../../models/user.dart' as user_model;
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+  String? _currentActivity;
+  String? _userName = 'Utilisateur';
+  bool _isLoading = true;
+  
+  late final HealthService _healthService;
+  Map<String, HealthIndicatorData> _healthIndicators = {};
+  StreamSubscription<Map<String, HealthIndicatorData>>? _healthSubscription;
+  
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+  int _alertLevel = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+    
+    _animation = Tween<double>(begin: 0.9, end: 1.1).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    
+    _loadUserData();
+    _initializeHealthData();
+  }
+
+  @override
+  void dispose() {
+    _healthSubscription?.cancel();
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initializeHealthData() async {
+    final userId = SessionManager.getUserId();
+    if (userId != null) {
+      _healthService = HealthService(userId);
+      
+      // Utiliser les données de test pour le développement
+      if (!mounted) return;
+      setState(() {
+        _healthIndicators = HealthService.getMockData();
+      });
+      
+      // Pour utiliser les données réelles de Firebase, décommentez ces lignes :
+      // _healthSubscription = _healthService.getHealthIndicatorsStream().listen((indicators) {
+      //   if (mounted) {
+      //     setState(() {
+      //       _healthIndicators = indicators;
+      //       _updateAlertLevel();
+      //     });
+      //   }
+      // });
+    }
+  }
+
+  void _updateAlertLevel() {
+    // Mettre à jour le niveau d'alerte global en fonction des indicateurs
+    int maxAlertLevel = 0;
+    _healthIndicators.forEach((key, indicator) {
+      if (indicator.status.index > maxAlertLevel) {
+        maxAlertLevel = indicator.status.index;
+      }
+    });
+    
+    if (mounted) {
+      setState(() {
+        _alertLevel = maxAlertLevel;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final userId = SessionManager.getUserId();
+      if (userId != null) {
+        final user = await DatabaseService.instance.getUserById(userId);
+        if (mounted) {
+          setState(() {
+            _userName = user?.prenom ?? 'Utilisateur';
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  // Méthode pour simuler un changement d'état d'un indicateur
+  void _simulateStatusChange() async {
+    // Simuler un changement d'état après 5 secondes
+    await Future.delayed(const Duration(seconds: 5));
+    
+    if (!mounted) return;
+    
+    // Mettre à jour un indicateur en état d'avertissement
+    setState(() {
+      _healthIndicators['bpm'] = HealthIndicatorData(
+        value: '92',
+        status: HealthStatus.warning,
+        label: 'BPM',
+        unit: '',
+        timestamp: DateTime.now(),
+      );
+    });
+    
+    _updateAlertLevel();
+  }
+
+  Color _getAlertColor() {
+    switch (_alertLevel) {
+      case 1: return Colors.orange;
+      case 2: return Colors.deepOrange;
+      case 3: return Colors.red;
+      default: return Colors.green;
+    }
+  }
+
+  String _getAlertMessage() {
+    switch (_alertLevel) {
+      case 1: return "Pré-alerte: Surveillez votre respiration";
+      case 2: return "Alerte modérée: Reposez-vous";
+      case 3: return "ALERTE CRITIQUE: Contactez un médecin";
+      default: return "Tout va bien";
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Accueil'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 20),
+              _buildLungAnimation(),
+              const SizedBox(height: 20),
+              _buildCurrentActivitySection(),
+              const SizedBox(height: 20),
+              _buildAssistantAdviceSection(),
+              const SizedBox(height: 20),
+              _buildDailyTrackingSection(),
+              const SizedBox(height: 20),
+              _buildAssociateDoctorButton(),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Accueil'),
+          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Carte'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
+        ],
+        currentIndex: 0,
+        onTap: (_) {},
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Bonjour $_userName',
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                'Comment vous sentez-vous aujourd\'hui ?',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ],
+          ),
+          CircleAvatar(
+            radius: 25,
+            backgroundColor: Colors.blue[100],
+            child: Icon(Icons.person, size: 30, color: Colors.blue[800]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLungAnimation() {
+    // S'assurer que les données sont chargées
+    if (_healthIndicators.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.only(right: 40),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Animation des poumons
+          Container(
+            width: 220,
+            height: 220,
+            margin: const EdgeInsets.only(top: 20, bottom: 40, left: 40),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.grey[100],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blue.withOpacity(0.2),
+                  blurRadius: 15,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: Center(
+              child: ScaleTransition(
+                scale: _animation,
+                child: Image.asset(
+                  'assets/animations/Poumons.gif',
+                  width: 180,
+                  height: 180,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
+          
+          // Indicateur SpO2 en haut
+          Positioned(
+            top: 10,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: _buildHealthIndicator(
+                _healthIndicators['spo2']!,
+              ),
+            ),
+          ),
+          
+          // Indicateur BPM à droite
+          Positioned(
+            right: 10,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: _buildHealthIndicator(
+                _healthIndicators['bpm']!,
+              ),
+            ),
+          ),
+          
+          // Indicateur IQA en bas
+          Positioned(
+            bottom: 10,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: _buildHealthIndicator(
+                _healthIndicators['iqa']!,
+              ),
+            ),
+          ),
+          
+          // Indicateur Pression à gauche
+          Positioned(
+            left: 10,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: _buildHealthIndicator(
+                _healthIndicators['blood_pressure']!,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHealthIndicator(HealthIndicatorData data) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: data.color.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '${data.value}${data.unit.isNotEmpty ? ' ${data.unit}' : ''}',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            data.label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.white70,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCurrentActivitySection() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Votre activité actuelle?',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildActivityButton('En course', Icons.directions_run, () {
+                  _updateActivity('En course');
+                }),
+                _buildActivityButton('Dormir', Icons.nightlight_round, () {
+                  _updateActivity('Dormir');
+                }),
+                _buildActivityButton('Stress', Icons.volunteer_activism, () {
+                  _updateActivity('Stress');
+                }),
+                _buildActivityButton('Autre?', Icons.more_horiz, () {
+                  _showOtherActivityDialog();
+                }),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityButton(String label, IconData icon, VoidCallback onPressed) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.blue[50],
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.blue),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _updateActivity(String activity) {
+    setState(() {
+      _currentActivity = activity;
+    });
+  }
+
+  void _showOtherActivityDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String activity = '';
+        return AlertDialog(
+          title: const Text('Autre activité'),
+          content: TextField(
+            onChanged: (value) => activity = value,
+            decoration: const InputDecoration(hintText: 'Entrez votre activité'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (activity.isNotEmpty) {
+                  _updateActivity(activity);
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('Valider'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildAssistantAdviceSection() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Conseil de votre assistant',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _getAlertColor().withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _getAlertColor().withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _alertLevel > 0 ? Icons.warning_amber_rounded : Icons.check_circle,
+                    color: _getAlertColor(),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _getAlertMessage(),
+                      style: TextStyle(color: _getAlertColor()),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDailyTrackingSection() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Suivi quotidien',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 10),
+            Text('Vos statistiques de la journée seront affichées ici.'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAssociateDoctorButton() {
+    return ElevatedButton.icon(
+      onPressed: () {},
+      icon: const Icon(Icons.medical_services),
+      label: const Text('Associer un médecin'),
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+      ),
+    );
+  }
+}
