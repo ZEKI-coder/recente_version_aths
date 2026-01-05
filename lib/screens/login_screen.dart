@@ -3,6 +3,7 @@ import '../services/database_service.dart';
 import '../services/session_manager.dart';
 import 'signup_screen.dart';
 import 'cadrant_screen.dart';
+import 'package:asthmatic_app/screens/profil.dart';
 
 
 
@@ -58,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
           );
 
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const CadrantScreen()),
+            MaterialPageRoute(builder: (_) => const ProfileScreen()),
           );
         }
       } else {

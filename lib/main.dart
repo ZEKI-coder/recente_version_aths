@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'screens/login_screen.dart';
 import 'services/database_service.dart';
+import'screens/ZEKI/zeki_profil.dart';
+import 'screens/ZEKI/zeki_connexion.dart';
+import 'screens/ZEKI/zeki_connexionProtégé.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -72,7 +75,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const LoginScreen(),
+      home: const GestionUsersPage(),
     );
   }
 }
