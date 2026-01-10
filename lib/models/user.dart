@@ -1,8 +1,13 @@
+<<<<<<< HEAD
 import 'dart:math';
 
 class User {
   final String? id;
   final String matricule; // Matricule unique pour QR code
+=======
+class User {
+  final String? id;
+>>>>>>> origin/zeki_dev
   final String email;
   final String password;
   final String nom;
@@ -13,7 +18,10 @@ class User {
 
   User({
     this.id,
+<<<<<<< HEAD
     required this.matricule,
+=======
+>>>>>>> origin/zeki_dev
     required this.email,
     required this.password,
     required this.nom,
@@ -23,6 +31,7 @@ class User {
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
+<<<<<<< HEAD
   // Générer un matricule unique
   static String generateMatricule() {
     final random = Random();
@@ -31,11 +40,16 @@ class User {
     return 'ZEKI$timestamp$randomPart';
   }
 
+=======
+>>>>>>> origin/zeki_dev
   // Convertir en Map pour la base de données
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+<<<<<<< HEAD
       'matricule': matricule,
+=======
+>>>>>>> origin/zeki_dev
       'email': email,
       'password': password,
       'nom': nom,
@@ -50,7 +64,10 @@ class User {
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
       id: map['id'] as String?,
+<<<<<<< HEAD
       matricule: map['matricule'] as String? ?? User.generateMatricule(),
+=======
+>>>>>>> origin/zeki_dev
       email: map['email'] as String,
       password: map['password'] as String? ?? '',
       nom: map['nom'] as String,
@@ -68,7 +85,10 @@ class User {
   // Copier avec modifications
   User copyWith({
     String? id,
+<<<<<<< HEAD
     String? matricule,
+=======
+>>>>>>> origin/zeki_dev
     String? email,
     String? password,
     String? nom,
@@ -79,7 +99,10 @@ class User {
   }) {
     return User(
       id: id ?? this.id,
+<<<<<<< HEAD
       matricule: matricule ?? this.matricule,
+=======
+>>>>>>> origin/zeki_dev
       email: email ?? this.email,
       password: password ?? this.password,
       nom: nom ?? this.nom,
@@ -92,6 +115,10 @@ class User {
 
   @override
   String toString() {
+<<<<<<< HEAD
     return 'User(id: $id, matricule: $matricule, email: $email, nom: $nom, prenom: $prenom, age: $age, hasConditions: $hasConditions)';
+=======
+    return 'User(id: $id, email: $email, nom: $nom, prenom: $prenom, age: $age, hasConditions: $hasConditions)';
+>>>>>>> origin/zeki_dev
   }
 }

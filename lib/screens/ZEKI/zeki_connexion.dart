@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+<<<<<<< HEAD
 import 'package:shared_preferences/shared_preferences.dart';
 import 'zeki_page_detail.dart';
 import 'qr_scanner_page.dart';
@@ -7,6 +8,9 @@ import '../../models/user.dart' as user_model;
 import '../../models/connexion.dart';
 import '../../services/connexion_service.dart';
 import '../../services/session_manager.dart';
+=======
+import 'zeki_page_detail.dart';
+>>>>>>> origin/zeki_dev
 
 class GestionUsersPage extends StatefulWidget {
   const GestionUsersPage({Key? key}) : super(key: key);
@@ -16,6 +20,7 @@ class GestionUsersPage extends StatefulWidget {
 }
 
 class _GestionUsersPageState extends State<GestionUsersPage> {
+<<<<<<< HEAD
   final ConnexionService _connexionService = ConnexionService();
   user_model.User? _currentUser;
   String _userMatricule = "";
@@ -77,6 +82,35 @@ class _GestionUsersPageState extends State<GestionUsersPage> {
       });
     }
   }
+=======
+  // Code QR unique de l'utilisateur
+  final String _qrCode = "USER_ID_12345"; // Généré dynamiquement
+
+  // Liste des connexions actuelles (scannées via QR)
+  final List<Map<String, dynamic>> _connexionsActuelles = [
+    {
+      'id': 1,
+      'nom': 'Kouassi Jean',
+      'email': 'jean@example.com',
+      'date': '28/12/2024 14:30',
+      'photo': null,
+    },
+    {
+      'id': 2,
+      'nom': 'Yao Marie',
+      'email': 'marie@example.com',
+      'date': '27/12/2024 10:15',
+      'photo': null,
+    },
+    {
+      'id': 3,
+      'nom': 'Koffi Pierre',
+      'email': 'pierre@example.com',
+      'date': '26/12/2024 16:45',
+      'photo': null,
+    },
+  ];
+>>>>>>> origin/zeki_dev
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +134,11 @@ class _GestionUsersPageState extends State<GestionUsersPage> {
               if (value == 'partager') {
                 _showPartagerCompteDialog();
               } else if (value == 'scanner') {
+<<<<<<< HEAD
                 _scanQRCode();
+=======
+                _showScannerQRPage();
+>>>>>>> origin/zeki_dev
               } else if (value == 'creer') {
                 _showCreerCompteDialog();
               }
@@ -131,12 +169,19 @@ class _GestionUsersPageState extends State<GestionUsersPage> {
           ),
         ],
       ),
+<<<<<<< HEAD
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
+=======
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+>>>>>>> origin/zeki_dev
             // Section Code QR
             Container(
               padding: const EdgeInsets.all(25),
@@ -180,7 +225,11 @@ class _GestionUsersPageState extends State<GestionUsersPage> {
                       border: Border.all(color: const Color(0xFF667EEA), width: 3),
                     ),
                     child: QrImageView(
+<<<<<<< HEAD
                       data: _userMatricule,
+=======
+                      data: _qrCode,
+>>>>>>> origin/zeki_dev
                       version: QrVersions.auto,
                       size: 200.0,
                       backgroundColor: Colors.white,
@@ -327,7 +376,11 @@ class _GestionUsersPageState extends State<GestionUsersPage> {
   }
 
   // Widget pour une carte de connexion
+<<<<<<< HEAD
   Widget _buildConnexionCard(Connexion connexion) {
+=======
+  Widget _buildConnexionCard(Map<String, dynamic> connexion) {
+>>>>>>> origin/zeki_dev
     return InkWell(
       onTap: () => _showConnexionDetails(connexion),
       child: Container(
@@ -345,9 +398,13 @@ class _GestionUsersPageState extends State<GestionUsersPage> {
               radius: 25,
               backgroundColor: const Color(0xFF667EEA),
               child: Text(
+<<<<<<< HEAD
                 connexion.utilisateurCibleNom.isNotEmpty 
                     ? connexion.utilisateurCibleNom[0].toUpperCase()
                     : 'U',
+=======
+                connexion['nom'][0],
+>>>>>>> origin/zeki_dev
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,
@@ -362,7 +419,11 @@ class _GestionUsersPageState extends State<GestionUsersPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
+<<<<<<< HEAD
                     connexion.utilisateurCibleNom,
+=======
+                    connexion['nom'],
+>>>>>>> origin/zeki_dev
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
@@ -370,7 +431,11 @@ class _GestionUsersPageState extends State<GestionUsersPage> {
                   ),
                   const SizedBox(height: 3),
                   Text(
+<<<<<<< HEAD
                     connexion.utilisateurCibleEmail,
+=======
+                    connexion['email'],
+>>>>>>> origin/zeki_dev
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 13,
@@ -382,7 +447,11 @@ class _GestionUsersPageState extends State<GestionUsersPage> {
                       Icon(Icons.access_time, size: 14, color: Colors.grey[500]),
                       const SizedBox(width: 5),
                       Text(
+<<<<<<< HEAD
                         _connexionService.formaterDateConnexion(connexion.dateConnexion),
+=======
+                        connexion['date'],
+>>>>>>> origin/zeki_dev
                         style: TextStyle(
                           color: Colors.grey[500],
                           fontSize: 12,
@@ -402,6 +471,7 @@ class _GestionUsersPageState extends State<GestionUsersPage> {
   }
 
   // Afficher détails connexion
+<<<<<<< HEAD
   void _showConnexionDetails(Connexion connexion) {
     Navigator.push(
       context,
@@ -416,11 +486,19 @@ class _GestionUsersPageState extends State<GestionUsersPage> {
             'photo': null,
           },
         ),
+=======
+  void _showConnexionDetails(Map<String, dynamic> connexion) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ConnexionDetailPage(connexion: connexion),
+>>>>>>> origin/zeki_dev
       ),
     );
   }
 
   // Fonction pour scanner un QR Code
+<<<<<<< HEAD
   Future<void> _scanQRCode() async {
     if (_currentUser?.id == null) {
       _showErrorSnackBar('Utilisateur non connecté');
@@ -439,6 +517,83 @@ class _GestionUsersPageState extends State<GestionUsersPage> {
       await _loadConnexions();
       _showSuccessSnackBar('Connexion ajoutée avec succès !');
     }
+=======
+  void _scanQRCode() {
+    // TODO: Implémenter la fonctionnalité de scan QR Code
+    // Vous pouvez utiliser le package 'mobile_scanner' ou 'qr_code_scanner'
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.qr_code_scanner, color: Color(0xFFFF6B6B)),
+              SizedBox(width: 10),
+              Text('Scanner un QR Code'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.qr_code_scanner,
+                size: 80,
+                color: Color(0xFFFF6B6B),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Scannez le QR Code d\'un autre utilisateur pour l\'ajouter à votre liste de connexions.',
+                style: TextStyle(fontSize: 14),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF6B6B).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Color(0xFFFF6B6B)),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Assurez-vous d\'avoir les permissions nécessaires',
+                        style: TextStyle(fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                // Ici vous pouvez ouvrir le scanner de QR Code
+                _showSuccessSnackBar('Ouverture du scanner...');
+                // TODO: Lancer le scanner QR Code
+              },
+              icon: const Icon(Icons.camera_alt),
+              label: const Text('Ouvrir caméra'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF6B6B),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+>>>>>>> origin/zeki_dev
   }
 
   // Dialog partager compte
@@ -457,7 +612,11 @@ class _GestionUsersPageState extends State<GestionUsersPage> {
               ),
               const SizedBox(height: 20),
               QrImageView(
+<<<<<<< HEAD
                 data: _userMatricule,
+=======
+                data: _qrCode,
+>>>>>>> origin/zeki_dev
                 version: QrVersions.auto,
                 size: 200.0,
                 backgroundColor: Colors.white,
@@ -563,6 +722,7 @@ class _GestionUsersPageState extends State<GestionUsersPage> {
       ),
     );
   }
+<<<<<<< HEAD
 
   // Afficher message d'erreur
   void _showErrorSnackBar(String message) {
@@ -574,6 +734,8 @@ class _GestionUsersPageState extends State<GestionUsersPage> {
       ),
     );
   }
+=======
+>>>>>>> origin/zeki_dev
 }
 
 // Page Scanner QR (placeholder)

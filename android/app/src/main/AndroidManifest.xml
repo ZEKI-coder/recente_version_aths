@@ -1,8 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<<<<<<< HEAD
     <!-- Permissions pour la caméra -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
     
+=======
+>>>>>>> origin/zeki_dev
     <application
         android:label="recente_version_aths"
         android:name="${applicationName}"

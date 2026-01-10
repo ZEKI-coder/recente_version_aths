@@ -60,7 +60,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // Mettre à jour le statut des conditions
         final updatedUser = user_model.User(
           id: _currentUser!.id,
+<<<<<<< HEAD
           matricule: _currentUser!.matricule,
+=======
+>>>>>>> origin/zeki_dev
           email: _currentUser!.email,
           password: _currentUser!.password,
           nom: _currentUser!.nom,
