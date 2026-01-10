@@ -1,10 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-<<<<<<< HEAD
 import '../models/user.dart' as user_model;
 import 'database_service.dart';
-=======
->>>>>>> origin/zeki_dev
 
 class SessionManager {
   static const String _keyRememberMe = 'remember_me';
@@ -82,12 +79,11 @@ class SessionManager {
     return _auth.authStateChanges();
   }
 
-<<<<<<< HEAD
   // Obtenir l'utilisateur actuel (notre modèle personnalisé)
   static Future<user_model.User?> getCurrentUser() async {
     final firebaseUser = _auth.currentUser;
     if (firebaseUser == null) return null;
-    
+
     try {
       // Récupérer notre utilisateur depuis la base de données locale
       return await DatabaseService.instance.getUserById(firebaseUser.uid);
@@ -99,10 +95,6 @@ class SessionManager {
 
   // Obtenir l'utilisateur Firebase Auth
   static User? getFirebaseUser() {
-=======
-  // Obtenir l'utilisateur actuel
-  static User? getCurrentUser() {
->>>>>>> origin/zeki_dev
     return _auth.currentUser;
   }
 

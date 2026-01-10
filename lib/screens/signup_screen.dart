@@ -53,10 +53,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
       // Créer l'utilisateur
       final user = user_model.User(
-<<<<<<< HEAD
         matricule: user_model.User.generateMatricule(),
-=======
->>>>>>> origin/zeki_dev
         email: email,
         password: _passwordController.text,
         nom: _nomController.text.trim(),
